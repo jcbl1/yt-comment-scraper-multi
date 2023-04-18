@@ -30,6 +30,9 @@ var joinCmd = &cobra.Command{
 		}
 
 	},
+	PostRun: func(cmd *cobra.Command, args []string) {
+		fmt.Println("Join success")
+	},
 }
 
 func joinProcess() error {

@@ -35,12 +35,19 @@ var convertCmd = &cobra.Command{
 			log.Fatalln(err)
 		}
 	},
+	PostRun: func(cmd *cobra.Command, args []string) {
+		if !quiet {
+			fmt.Println("Conversion success")
+		}
+	},
 }
 
 var waitConvert sync.WaitGroup
 
 func convertProcess() error {
-	fmt.Println("Converting...")
+	if !quiet {
+		fmt.Println("Converting...")
+	}
 
 	if outputDir == "" {
 		outputDir = "./tmp"
@@ -103,12 +110,6 @@ func convert(filename string) error {
 				return err
 			}
 			comments = append(comments, comment)
-		}
-	}
-
-	if debug && len(comments) != 0 {
-		for i := 0; i < 10; i++ {
-			fmt.Println("[o] ", comments[i].TimeParsed)
 		}
 	}
 
