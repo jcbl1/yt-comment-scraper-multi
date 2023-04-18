@@ -29,11 +29,12 @@ var joinCmd = &cobra.Command{
 			log.Fatalln(err)
 		}
 
-		fmt.Println(sUCCESS_OUTPUT)
 	},
 }
 
 func joinProcess() error {
+	fmt.Println("Joining...")
+
 	if outputDir == "" {
 		outputDir = "./tmp"
 	}

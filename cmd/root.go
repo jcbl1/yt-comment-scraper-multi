@@ -3,7 +3,6 @@ package cmd
 import (
 	"bufio"
 	"context"
-	"fmt"
 	"log"
 	"os"
 	"sync"
@@ -13,18 +12,19 @@ import (
 	"github.com/spf13/cobra"
 )
 
-const (
-	sUCCESS_OUTPUT = "Success."
-)
-
 var rootCmdName = "yt-comment-scraper-multi"
 var urlListFilename, outputDir string
 var debug = false
+var convertOpt bool
+var joinOpt bool
 
 func init() {
 	rootCmd.Flags().StringVarP(&urlListFilename, "url-list-filename", "f", "", "URL list")
 	rootCmd.PersistentFlags().BoolVarP(&debug, "debug", "d", false, "Debug mode")
 	rootCmd.PersistentFlags().StringVarP(&outputDir, "output-dir", "o", "", "Specify the output directory to store results (the default one is ./tmp/)")
+
+	rootCmd.Flags().BoolVarP(&convertOpt, "convert", "c", false, "Append converting operation")
+	rootCmd.Flags().BoolVarP(&joinOpt, "join", "j", false, "Append joining operation")
 }
 
 var rootCmd = &cobra.Command{
@@ -35,6 +35,7 @@ var rootCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		if debug {
 			log.SetFlags(log.Llongfile)
+			log.Println("called")
 		}
 		if urlListFilename == "" {
 			cmd.Usage()
@@ -45,7 +46,13 @@ var rootCmd = &cobra.Command{
 			log.Fatalln(err)
 		}
 
-		fmt.Println(sUCCESS_OUTPUT)
+		if convertOpt {
+			convertCmd.Run(cmd, args)
+			if joinOpt {
+				joinCmd.Run(cmd, args)
+			}
+		}
+
 	},
 }
 
@@ -72,6 +79,9 @@ func process() error {
 				}
 			}()
 		}
+	}
+	if debug {
+		log.Println("here")
 	}
 	wg.Wait()
 	return nil

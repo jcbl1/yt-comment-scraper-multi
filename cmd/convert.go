@@ -14,12 +14,10 @@ import (
 	"github.com/xuri/excelize/v2"
 )
 
-var joinOpt bool
-
 func init() {
 	rootCmd.AddCommand(convertCmd)
 
-	convertCmd.Flags().BoolVarP(&joinOpt, "join", "j", false, "Whether to join the xlsx files into one file")
+	convertCmd.Flags().BoolVarP(&joinOpt, "join", "j", false, "Append joining operation")
 }
 
 var convertCmd = &cobra.Command{
@@ -36,14 +34,14 @@ var convertCmd = &cobra.Command{
 		if err != nil {
 			log.Fatalln(err)
 		}
-
-		fmt.Println(sUCCESS_OUTPUT)
 	},
 }
 
 var waitConvert sync.WaitGroup
 
 func convertProcess() error {
+	fmt.Println("Converting...")
+
 	if outputDir == "" {
 		outputDir = "./tmp"
 	} else {
