@@ -3,6 +3,7 @@ package cmd
 import (
 	"bufio"
 	"context"
+	"fmt"
 	"log"
 	"os"
 	"sync"
@@ -14,7 +15,8 @@ import (
 
 var rootCmdName = "yt-comment-scraper-multi"
 var urlListFilename, outputDir string
-var debug = false
+var debug bool
+var quiet bool
 var convertOpt bool
 var joinOpt bool
 
@@ -25,6 +27,8 @@ func init() {
 
 	rootCmd.Flags().BoolVarP(&convertOpt, "convert", "c", false, "Append converting operation")
 	rootCmd.Flags().BoolVarP(&joinOpt, "join", "j", false, "Append joining operation")
+
+	rootCmd.PersistentFlags().BoolVarP(&quiet, "quiet", "q", false, "Amit all outputs")
 }
 
 var rootCmd = &cobra.Command{
@@ -35,7 +39,6 @@ var rootCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		if debug {
 			log.SetFlags(log.Llongfile)
-			log.Println("called")
 		}
 		if urlListFilename == "" {
 			cmd.Usage()
@@ -53,6 +56,12 @@ var rootCmd = &cobra.Command{
 			}
 		}
 
+	},
+
+	PostRun: func(cmd *cobra.Command, args []string) {
+		if !quiet {
+			fmt.Println("Success")
+		}
 	},
 }
 
@@ -79,9 +88,6 @@ func process() error {
 				}
 			}()
 		}
-	}
-	if debug {
-		log.Println("here")
 	}
 	wg.Wait()
 	return nil
