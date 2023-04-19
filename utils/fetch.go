@@ -2,7 +2,6 @@ package utils
 
 import (
 	"bytes"
-	"context"
 	"fmt"
 	"io"
 	"os"
@@ -11,8 +10,11 @@ import (
 	"sync"
 )
 
-func Fetch(wg *sync.WaitGroup, ctx context.Context, url string, idx uint32, outputDir string) error {
+func Fetch(wg *sync.WaitGroup, done *chan struct{}, url string, idx uint32, outputDir string) error {
 	defer wg.Done()
+	defer func() {
+		*done <- struct{}{}
+	}()
 	var cmdYTCommentDownloader = exec.Command("youtube-comment-downloader")
 	cmdYTCommentDownloader.Args = append(
 		cmdYTCommentDownloader.Args,
@@ -25,7 +27,6 @@ func Fetch(wg *sync.WaitGroup, ctx context.Context, url string, idx uint32, outp
 	} else {
 		cmdYTCommentDownloader.Args = append(cmdYTCommentDownloader.Args, fmt.Sprintf("%s/%d.json", strings.TrimRight(outputDir, "/"), idx))
 	}
-	// log.Println(cmdYTCommentDownloader.Args)
 
 	var outBuf, errBuf bytes.Buffer
 	cmdYTCommentDownloader.Stdout = io.MultiWriter(os.Stdout, &outBuf)
@@ -35,14 +36,12 @@ func Fetch(wg *sync.WaitGroup, ctx context.Context, url string, idx uint32, outp
 		return err
 	}
 
-	// fmt.Printf("Downloading idx: %d\n", idx)
-
 	err = cmdYTCommentDownloader.Wait()
 	if err != nil {
 		return err
 	}
 
-	// defer fmt.Println(outBuf.String())
+	defer fmt.Println(outBuf.String())
 
 	return nil
 }

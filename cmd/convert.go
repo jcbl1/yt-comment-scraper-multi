@@ -14,10 +14,13 @@ import (
 	"github.com/xuri/excelize/v2"
 )
 
+var plainText bool
+
 func init() {
 	rootCmd.AddCommand(convertCmd)
 
 	convertCmd.Flags().BoolVarP(&joinOpt, "join", "j", false, "Append joining operation")
+	convertCmd.Flags().BoolVar(&plainText, "plain-text", false, "Convert into a plain text file")
 }
 
 var convertCmd = &cobra.Command{
@@ -33,6 +36,9 @@ var convertCmd = &cobra.Command{
 		err := convertProcess()
 		if err != nil {
 			log.Fatalln(err)
+		}
+		if joinOpt {
+			joinCmd.Run(cmd, args)
 		}
 	},
 	PostRun: func(cmd *cobra.Command, args []string) {
@@ -90,8 +96,14 @@ type Comment struct {
 	TimeParsed float64 `json:"time_parsed"`
 }
 
+var lock sync.Mutex
+
 func convert(filename string) error {
 	defer waitConvert.Done()
+	if plainText {
+		lock.Lock()
+		defer lock.Unlock()
+	}
 
 	f, err := os.Open(filename)
 	if err != nil {
@@ -114,6 +126,26 @@ func convert(filename string) error {
 	}
 
 	// Writing to file
+	if plainText {
+		outputFile, err := os.OpenFile(
+			outputDir+"/joined.txt",
+			os.O_CREATE|os.O_WRONLY|os.O_APPEND,
+			0644,
+		)
+		if err != nil {
+			return err
+		}
+		defer outputFile.Close()
+		defer outputFile.Sync()
+		for _, v := range comments {
+			_, err := outputFile.WriteString(v.Text + "\n")
+			if err != nil {
+				return err
+			}
+		}
+
+		return nil
+	}
 	outputFile, err := os.OpenFile(
 		strings.TrimSuffix(filename, ".json")+".xlsx",
 		os.O_CREATE|os.O_WRONLY,

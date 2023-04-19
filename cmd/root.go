@@ -2,7 +2,6 @@ package cmd
 
 import (
 	"bufio"
-	"context"
 	"fmt"
 	"log"
 	"os"
@@ -12,6 +11,8 @@ import (
 	"github.com/jcbl1/yt-comment-scraper-multi/utils"
 	"github.com/spf13/cobra"
 )
+
+var maxThreads = 8
 
 var rootCmdName = "yt-comment-scraper-multi"
 var urlListFilename, outputDir string
@@ -29,6 +30,7 @@ func init() {
 	rootCmd.Flags().BoolVarP(&joinOpt, "join", "j", false, "Append joining operation")
 
 	rootCmd.PersistentFlags().BoolVarP(&quiet, "quiet", "q", false, "Amit all outputs")
+	rootCmd.Flags().IntVar(&maxThreads, "max-threads", 8, "Max threads scraping comments")
 }
 
 var rootCmd = &cobra.Command{
@@ -74,15 +76,21 @@ func process() error {
 	scnr := bufio.NewScanner(f)
 	wg := sync.WaitGroup{}
 	var idx uint32
+	threads := 0
+	done := make(chan struct{}, maxThreads)
+	defer close(done)
 	for scnr.Scan() {
 		text := scnr.Text()
 		if text != "" {
 			wg.Add(1)
-			ctx, cancel := context.WithCancel(context.Background())
-			defer cancel()
+			if threads < maxThreads {
+				threads++
+			} else {
+				<-done
+			}
 			go func() {
 				atomic.AddUint32(&idx, 1)
-				err := utils.Fetch(&wg, ctx, text, idx, outputDir)
+				err := utils.Fetch(&wg, &done, text, idx, outputDir)
 				if err != nil {
 					log.Fatalln(err)
 				}
