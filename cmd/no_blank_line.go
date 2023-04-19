@@ -32,6 +32,10 @@ func noBlankLine() error {
 	}
 
 	f.Truncate(0)
+	_, err = f.Seek(0, 0)
+	if err != nil {
+		return err
+	}
 	for _, line := range lines {
 		_, err := f.WriteString(line + "\n")
 		if err != nil {
