@@ -15,12 +15,14 @@ import (
 )
 
 var plainText bool
+var noBlankLineOpt bool
 
 func init() {
 	rootCmd.AddCommand(convertCmd)
 
 	convertCmd.Flags().BoolVarP(&joinOpt, "join", "j", false, "Append joining operation")
 	convertCmd.Flags().BoolVar(&plainText, "plain-text", false, "Convert into a plain text file")
+	convertCmd.Flags().BoolVar(&noBlankLineOpt, "no-blank-line", false, "Trim all blank lines")
 }
 
 var convertCmd = &cobra.Command{
@@ -32,6 +34,13 @@ var convertCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		if debug {
 			log.SetFlags(log.Llongfile)
+		}
+		if noBlankLineOpt {
+			err := noBlankLine()
+			if err != nil {
+				log.Fatalln(err)
+			}
+			return
 		}
 		err := convertProcess()
 		if err != nil {
